@@ -1,0 +1,29 @@
+name: Run ACS to S3 Pipeline
+
+on:
+  # Run the ACS to S3 pipeline on demand
+  workflow_dispatch: # Run this workflow through GitHub
+
+jobs:
+  run-elt:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Python environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install data stack dependencies
+        run: |
+          pip install requests pandas boto3 snowflake-connector-python
+
+      - name: Execute e2e extraction and ingestion
+        env: 
+          CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }} 
+        run: |
+          python scripts/ingest_data.py
