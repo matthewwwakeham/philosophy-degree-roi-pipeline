@@ -30,3 +30,21 @@ CREATE OR REPLACE STAGE PHILOSOPHY_ROI.STAGING.ACS_EXTERNAL_STAGE
         AWS_SECRET_KEY = 'PASTE_YOUR_AWS_SECRET_ACCESS_KEY_HERE'
     )
     FILE_FORMAT = (TYPE = 'JSON');
+
+    USE DATABASE PHILOSOPHY_ROI;
+USE ROLE ACCOUNTADMIN;
+USE WAREHOUSE ROI_INGEST_WH;
+
+SELECT 
+    occupation_title,
+    primary_degree_title,
+    secondary_degree_title,
+    age_bracket,
+    estimated_sample_population AS estimated_us_population,
+    weighted_average_annual_wages AS real_average_wages
+FROM PHILOSOPHY_ROI.STAGING.MART_PHILOSOPHY_EARNINGS_SUMMARY
+WHERE weighted_average_annual_wages BETWEEN 45000 AND 100000
+AND occupation_title != 'Unknown/Unmapped Occupation'
+AND secondary_degree_title = 'No Secondary Degree'
+AND age_bracket = '31-45 (Mid Career)'
+ORDER BY weighted_average_annual_wages, age_bracket DESC;
