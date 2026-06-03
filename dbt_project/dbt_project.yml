@@ -11,6 +11,8 @@ models:
   philosophy_roi_transformations:
     staging:
       +materialized: table
+    marts:
+      +materialized: table
       
 seeds:
   philosophy_roi_transformations:
