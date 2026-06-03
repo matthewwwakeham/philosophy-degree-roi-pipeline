@@ -27,7 +27,7 @@ SELECT
         2
     ) AS weighted_average_annual_wages
 
-FROM {{ ref('fct_earnings_responses') }} fct
+FROM {{ ref('fct_earnings_response') }} fct
 LEFT JOIN {{ ref('dim_demographics') }} dim_dem 
     ON fct.person_age = dim_dem.person_age
 LEFT JOIN {{ ref('dim_education') }} dim_edu 

@@ -82,7 +82,7 @@ def grab_pums_api():
         if CENSUS_API_KEY:
             params['key'] = CENSUS_API_KEY
 
-        logging.info(f"Fetching PUMS {YEAR} {DATASET} for FOD1P={FOD_CODE}.")
+        logging.info(f"Fetching PUMS {YEAR} {DATASET} for FOD1P={FOD_CODE}+.")
         response = session.get(url, params=params, timeout=120)
         response.raise_for_status()
 
