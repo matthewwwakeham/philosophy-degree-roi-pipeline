@@ -1,4 +1,4 @@
-name: Run ACS to S3 Pipeline
+name: Run ACS, S3, Snowflake Pipeline
 
 on:
   # Run the ACS to S3 pipeline on demand
