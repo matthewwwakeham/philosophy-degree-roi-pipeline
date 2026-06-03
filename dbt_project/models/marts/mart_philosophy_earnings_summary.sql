@@ -4,13 +4,24 @@ WITH staging_acs AS (
     SELECT * FROM {{ ref('stg_acs_philosophy') }}
 ),
 
+-- Clean the text-based numeric fields before ANY math operations touch them
+sanitized_acs AS (
+    SELECT
+        primary_degree_code,
+        secondary_degree_code,
+        occupation_code,
+        employment_status_code,
+        TRY_TO_NUMBER(person_weight) AS person_weight,
+        TRY_TO_NUMBER(wages_salary_income) AS wages_salary_income,
+        TRY_TO_NUMBER(person_age) AS person_age
+    FROM staging_acs
+),
+
 degree_map AS (
-    -- Natively reads as text strings now
     SELECT code AS degree_code, degree_title FROM {{ ref('degree_lookup') }}
 ),
 
 occupation_map AS (
-    -- Natively reads as text strings now
     SELECT code AS occupation_code, occupation_title FROM {{ ref('occupation_lookup') }}
 )
 
@@ -41,7 +52,7 @@ SELECT
     -- Population Telemetry
     SUM(acs.person_weight) AS estimated_sample_population,
 
-    -- Financial ROI Metrics
+    -- Financial ROI Metrics (Safely handles nulls converted from 'N')
     SUM(
         CASE 
             WHEN acs.employment_status_code = '1' AND acs.wages_salary_income > 0 
@@ -78,7 +89,7 @@ SELECT
     ) AS weighted_average_annual_wages
 
 FROM 
-    staging_acs acs
+    sanitized_acs acs
 LEFT JOIN 
     degree_map d1 ON acs.primary_degree_code = d1.degree_code
 LEFT JOIN 
