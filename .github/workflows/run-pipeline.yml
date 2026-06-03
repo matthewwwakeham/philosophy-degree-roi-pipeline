@@ -1,4 +1,4 @@
-name: Run ACS, S3, Snowflake Pipeline
+name: Run Data Pipeline ELT
 
 on:
   # Run the ACS to S3 pipeline on demand
