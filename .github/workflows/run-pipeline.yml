@@ -35,4 +35,4 @@ jobs:
           #2
           cd dbt_project
           dbt seed --profiles-dir .
-          dbt run --select mart_philosophy_earnings_summary --full-refresh --profiles-dir .
+          dbt run --profiles-dir .
