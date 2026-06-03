@@ -4,12 +4,33 @@ WITH staging_acs AS (
     SELECT * FROM {{ ref('stg_acs_philosophy') }}
 ),
 
+-- Pre-sanitize the data layer to convert Census alphabetic flags into clean numbers or NULLs
+cleaned_acs AS (
+    SELECT
+        housing_serial_number,
+        primary_degree_code,
+        secondary_degree_code,
+        occupation_code,
+        employment_status_code,
+        TRY_TO_NUMBER(person_number) AS person_number,
+        TRY_TO_NUMBER(person_weight) AS person_weight,
+        TRY_TO_NUMBER(wages_salary_income) AS wages_salary_income,
+        TRY_TO_NUMBER(person_age) AS person_age
+    FROM staging_acs
+),
+
 degree_map AS (
-    SELECT code::STRING AS degree_code, degree_title FROM {{ ref('degree_lookup') }}
+    SELECT 
+        code::STRING AS degree_code, 
+        degree_title 
+    FROM {{ ref('degree_lookup') }}
 ),
 
 occupation_map AS (
-    SELECT code::STRING AS occupation_code, occupation_title FROM {{ ref('occupation_lookup') }}
+    SELECT 
+        code::STRING AS occupation_code, 
+        occupation_title 
+    FROM {{ ref('occupation_lookup') }}
 )
 
 SELECT
@@ -36,12 +57,10 @@ SELECT
         ELSE 'Unknown'
     END AS employment_status_desc,
 
-    -- Population Telemetry (Summing the weights gives the true US population estimate)
+    -- Population Telemetry
     SUM(acs.person_weight) AS estimated_sample_population,
 
-    -- Financial ROI Metrics (Calculating Weighted Average)
-    -- Formula: Sum(Wages * Weight) / Sum(Weight)
-    -- Only calculate wages for individuals who are actively employed and reporting an income
+    -- Financial ROI Metrics (Safely handling NULLs using the cleaned numeric inputs)
     SUM(
         CASE 
             WHEN acs.employment_status_code = '1' AND acs.wages_salary_income > 0 
@@ -58,7 +77,6 @@ SELECT
         END
     ) AS wage_earning_population_pool,
 
-    -- Final calculated column. NULLIF prevents a divide-by-zero error if a category has no employed records.
     ROUND(
         SUM(
             CASE 
@@ -79,7 +97,7 @@ SELECT
     ) AS weighted_average_annual_wages
 
 FROM 
-    staging_acs acs
+    cleaned_acs acs
 LEFT JOIN 
     degree_map d1 ON acs.primary_degree_code = d1.degree_code
 LEFT JOIN 
