@@ -34,5 +34,6 @@ jobs:
 
           #2
           cd dbt_project
+          dbt deps
           dbt seed --profiles-dir .
           dbt run --full-refresh --profiles-dir .
