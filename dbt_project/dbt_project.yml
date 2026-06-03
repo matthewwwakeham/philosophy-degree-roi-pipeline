@@ -1,0 +1,13 @@
+name: 'philosophy_roi_transformations'
+version: '1.0.0'
+config-version: 2
+
+profile: 'philosophy_roi_profile'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+
+models:
+  philosophy_roi_transformations:
+    staging:
+      +materialized: table

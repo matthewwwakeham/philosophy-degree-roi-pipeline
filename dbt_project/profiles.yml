@@ -1,0 +1,13 @@
+philosophy_roi_profile:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: accountadmin
+      database: PHILOSOPHY_ROI
+      warehouse: ROI_INGEST_WH
+      schema: STAGING
+      threads: 4

@@ -18,12 +18,21 @@ jobs:
 
       - name: Install data stack dependencies
         run: |
-          pip install requests pandas boto3 snowflake-connector-python python-dotenv
+          pip install requests pandas boto3 snowflake-connector-python dbt-snowflake python-dotenv
 
       - name: Execute e2e extraction and ingestion
         env: 
           CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }} 
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
         run: |
+          #1
           python scripts/ingest_data.py
+
+          #2
+          cd dbt_project
+          dbt seed --profiles-dir .
+          dbt run --profiles-dir .

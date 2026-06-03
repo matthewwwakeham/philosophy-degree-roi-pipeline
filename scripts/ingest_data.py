@@ -5,6 +5,7 @@ import os
 import boto3
 import requests
 import json
+import snowflake.connector
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from requests.adapters import HTTPAdapter
@@ -117,11 +118,44 @@ def upload_pums_to_s3(bucket_name, records):
             ContentType='application/x-ndjson'
         )
         logging.info(f"Uploaded {len(records):,} records to s3://{bucket_name}/{s3_key}.")
-        return True
+        return s3_key
     except Exception as e:
         logging.error(f"Failed to upload to s3: {e}")
-        return False
+        return None
     
+def load_s3_to_snowflake(s3_key):
+    """
+    Have Snowflake pull the targeted file out of the S3 external stage.
+    """
+    logging.info("Starting Snowflake copy sequence...")
+    try:
+        conn = snowflake.connector.connect(
+            user=os.getenv('SNOWFLAKE_USER'),
+            password=os.getenv('SNOWFLAKE_PASSWORD'),
+            account=os.getenv('SNOWFLAKE_ACCOUNT'),
+            warehouse='ROI_INGEST_WH',
+            database='PHILOSOPHY_ROI',
+            schema='STAGING'
+        )
+        cursor = conn.cursor()
+
+        # Target only the file produced by this specific run execution
+        copy_query = f"""
+            COPY INTO philosophy_roi.staging.acs_json_raw
+            FROM @philosophy_roi.staging.acs_external_stage/{s3_key}
+            FILE_FORMAT = (TYPE = 'JSON')
+            ON_ERROR = 'ABORT_STATEMENT';
+        """
+        
+        cursor.execute(copy_query)
+        logging.info(f"Snowflake ingestion successful for asset: {s3_key}")
+        conn.close()
+        return True
+    
+    except Exception as e:
+        logging.error(f"Snowflake transaction failed: {e}")
+        return False
+
 if __name__ == "__main__":
     bucket_name = 'philosophy-5-year-public-microdata-sample-2023'
 
@@ -130,5 +164,9 @@ if __name__ == "__main__":
         logging.info("Pipeline starting...")
         records = grab_pums_api()
         if records:
-            upload_pums_to_s3(bucket_name, records)
+            s3_key = upload_pums_to_s3(bucket_name, records)
+
+            # If S3 upload returns valid key name, execute the warehouse's ingestion query
+            if s3_key:
+                load_s3_to_snowflake(s3_key)
         logging.info("Pipeline finished.")
