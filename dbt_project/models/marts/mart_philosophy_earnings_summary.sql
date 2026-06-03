@@ -5,11 +5,11 @@ WITH staging_acs AS (
 ),
 
 degree_map AS (
-    SELECT code AS degree_code, degree_title FROM {{ ref('degree_lookup') }}
+    SELECT code::STRING AS degree_code, degree_title FROM {{ ref('degree_lookup') }}
 ),
 
 occupation_map AS (
-    SELECT code AS occupation_code, occupation_title FROM {{ ref('occupation_lookup') }}
+    SELECT code::STRING AS occupation_code, occupation_title FROM {{ ref('occupation_lookup') }}
 )
 
 SELECT
