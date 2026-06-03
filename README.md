@@ -1,69 +1,8 @@
-# American Community Survey (ACS) Philosophy Degree ROI Pipeline
+# Philosophy Degree ROI Pipeline
 
--- 1. Create the database container
-CREATE OR REPLACE DATABASE PHILOSOPHY_ROI;
+## About
+In this project, I built an Extract, Load, Transform (ELT) pipeline utilizing the modern data stack: Amazon S3, dbt and Snowflake, orchestrated via **GitHub Actions**. 
 
--- 2. Create the staging schema container
-CREATE OR REPLACE SCHEMA PHILOSOPHY_ROI.STAGING;
+The pipeline ingests a raw individual-level microdata sample (2019-2023) from the American Community Survey (ACS) through a public API issued by the US Census Bureau.
 
--- 3. Create the dedicated virtual warehouse for computation
-CREATE OR REPLACE WAREHOUSE ROI_INGEST_WH WITH
-    WAREHOUSE_SIZE = 'XSMALL'
-    AUTO_SUSPEND = 60
-    AUTO_RESUME = TRUE
-    INITIALLY_SUSPENDED = TRUE;
-
--- 4. Create the raw variant table where Python drops the JSON blobs
-CREATE OR REPLACE TABLE PHILOSOPHY_ROI.STAGING.ACS_JSON_RAW (
-    RAW_PAYLOAD VARIANT
-);
-
--- 5. Create the External Stage mapping to your S3 bucket
-CREATE OR REPLACE STAGE PHILOSOPHY_ROI.STAGING.ACS_EXTERNAL_STAGE
-    URL = 's3://philosophy-5-year-public-microdata-sample-2023/'
-    FILE_FORMAT = (TYPE = 'JSON');
-
-CREATE OR REPLACE STAGE PHILOSOPHY_ROI.STAGING.ACS_EXTERNAL_STAGE
-    URL = 's3://philosophy-5-year-public-microdata-sample-2023/'
-    CREDENTIALS = (
-        AWS_KEY_ID = 'PASTE_YOUR_AWS_ACCESS_KEY_ID_HERE' 
-        AWS_SECRET_KEY = 'PASTE_YOUR_AWS_SECRET_ACCESS_KEY_HERE'
-    )
-    FILE_FORMAT = (TYPE = 'JSON');
-
-    USE DATABASE PHILOSOPHY_ROI;
-USE ROLE ACCOUNTADMIN;
-USE WAREHOUSE ROI_INGEST_WH;
-
-SELECT 
-    occupation_title,
-    primary_degree_title,
-    secondary_degree_title,
-    age_bracket,
-    estimated_sample_population AS estimated_us_population,
-    weighted_average_annual_wages AS real_average_wages
-FROM PHILOSOPHY_ROI.STAGING.MART_PHILOSOPHY_EARNINGS_SUMMARY
-WHERE weighted_average_annual_wages BETWEEN 45000 AND 100000
-AND occupation_title != 'Unknown/Unmapped Occupation'
-AND secondary_degree_title = 'No Secondary Degree'
-AND age_bracket = '31-45 (Mid Career)'
-ORDER BY weighted_average_annual_wages, age_bracket DESC;
-
-USE DATABASE PHILOSOPHY_ROI;
-USE ROLE ACCOUNTADMIN;
-USE WAREHOUSE ROI_INGEST_WH;
-
-SELECT 
-    occupation_title,
-    primary_degree_title,
-    secondary_degree_title,
-    age_bracket,
-    estimated_sample_population AS estimated_us_population,
-    weighted_average_annual_wages AS real_average_wages
-FROM PHILOSOPHY_ROI.STAGING.MART_PHILOSOPHY_EARNINGS_SUMMARY
-WHERE weighted_average_annual_wages BETWEEN 45000 AND 99999
-AND occupation_title != 'Unknown/Unmapped Occupation'
-AND secondary_degree_title = 'No Secondary Degree'
-AND age_bracket = '31-45 (Mid Career)'
-AND estimated_sample_population >= 100
-ORDER BY weighted_average_annual_wages, age_bracket DESC;
+Using dbt, the raw data is modeled into a **Star Schema**, decoupling descriptive categories from economic metrics, providing an analysis of the long-term career outcomes of individuals holding an undergraduate degree in philosophy.
