@@ -34,9 +34,5 @@ jobs:
 
           #2
           cd dbt_project
-          echo "=== ACTUAL FILES ON RUNNER DISK ==="
-          ls -R models/
-          echo "==================================="
-          
           dbt seed --profiles-dir .
-          dbt run --select mart_philosophy_roi_complete --profiles-dir .
+          dbt run --full-refresh --profiles-dir .
