@@ -4,7 +4,7 @@ WITH staging_acs AS (
     SELECT * FROM {{ ref('stg_acs_philosophy') }}
 ),
 
--- Clean the text-based numeric fields before ANY math operations touch them
+-- 1. Safely handle alphabetic flags ('N') in raw numeric analysis fields
 sanitized_acs AS (
     SELECT
         primary_degree_code,
@@ -18,11 +18,20 @@ sanitized_acs AS (
 ),
 
 degree_map AS (
-    SELECT code AS degree_code, degree_title FROM {{ ref('degree_lookup') }}
+    -- 2. DEFENSIVE FIX: Force the seed code to a string right here.
+    -- This guarantees a string-to-string join even if the physical table is still an integer.
+    SELECT 
+        TO_VARCHAR(code) AS degree_code, 
+        degree_title 
+    FROM {{ ref('degree_lookup') }}
 ),
 
 occupation_map AS (
-    SELECT code AS occupation_code, occupation_title FROM {{ ref('occupation_lookup') }}
+    -- 3. DEFENSIVE FIX: Force the seed code to a string right here.
+    SELECT 
+        TO_VARCHAR(code) AS occupation_code, 
+        occupation_title 
+    FROM {{ ref('occupation_lookup') }}
 )
 
 SELECT
