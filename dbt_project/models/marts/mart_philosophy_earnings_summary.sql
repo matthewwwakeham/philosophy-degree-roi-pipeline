@@ -15,6 +15,8 @@ sanitized_acs AS (
         TRY_TO_NUMBER(wages_salary_income) AS wages_salary_income,
         TRY_TO_NUMBER(person_age) AS person_age
     FROM staging_acs
+    
+    WHERE educational_attainment_code = '21'
 ),
 
 degree_map AS (
