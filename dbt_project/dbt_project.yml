@@ -11,3 +11,9 @@ models:
   philosophy_roi_transformations:
     staging:
       +materialized: table
+
+# ADD THIS BLOCK AT THE BOTTOM:
+seeds:
+  philosophy_roi_transformations:
+    +column_types:
+      code: varchar(20)
